@@ -16,4 +16,5 @@ public interface Buffer<T> {
 
     // Desassocia o buffer e fecha o arquivo
     void fechaBuffer();
+     void adicionaAoBuffer(Cliente cliente);
 }

@@ -2,7 +2,7 @@ package entity.cms;
 
 import java.io.Serializable;
 
-public class Cliente implements Serializable {
+public class Cliente implements Serializable ,Comparable<Cliente> {
     // Serial Version UID para controle de versão da serialização
     private static final long serialVersionUID = 1L;
 
@@ -76,5 +76,12 @@ public class Cliente implements Serializable {
                 ", telefone='" + telefone + '\'' +
                 ", creditScore=" + creditScore +
                 '}';
+    }
+
+    public int compareTo(Cliente outroCliente) {
+        // Comparando pelo nome. Se preferir, substitua por outro critério (como id)
+        return this.nome.compareTo(outroCliente.getNome());
+        // Caso prefira comparar pelo ID, use:
+        // return Integer.compare(this.id, outroCliente.getId());
     }
 }

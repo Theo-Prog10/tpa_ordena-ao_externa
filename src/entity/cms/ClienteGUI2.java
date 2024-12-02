@@ -7,6 +7,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.AdjustmentEvent;
 import java.awt.event.AdjustmentListener;
+import java.io.IOException;
+import java.util.List;
 
 public class ClienteGUI2 extends JFrame {
     private JTable table;
@@ -26,7 +28,6 @@ public class ClienteGUI2 extends JFrame {
         criarInterface();
     }
 
-
     private void carregarArquivo() {
         JFileChooser fileChooser = new JFileChooser();
         int retorno = fileChooser.showOpenDialog(this);
@@ -40,6 +41,7 @@ public class ClienteGUI2 extends JFrame {
             arquivoCarregado = true; // Marca que o arquivo foi carregado
         }
     }
+
     private void criarInterface() {
         JPanel panel = new JPanel(new BorderLayout());
         JButton btnCarregar = new JButton("Carregar Clientes");
@@ -53,10 +55,10 @@ public class ClienteGUI2 extends JFrame {
             public void adjustmentValueChanged(AdjustmentEvent e) {
                 if (!scrollPane.getVerticalScrollBar().getValueIsAdjusting()) {
                     // Verifica se estamos no final da tabela e se o arquivo foi carregado
-                    if (arquivoCarregado && 
-                        scrollPane.getVerticalScrollBar().getValue() + 
-                        scrollPane.getVerticalScrollBar().getVisibleAmount() >= 
-                        scrollPane.getVerticalScrollBar().getMaximum()) {
+                    if (arquivoCarregado &&
+                            scrollPane.getVerticalScrollBar().getValue() +
+                                    scrollPane.getVerticalScrollBar().getVisibleAmount() >=
+                                    scrollPane.getVerticalScrollBar().getMaximum()) {
                         carregarMaisClientes();
                     }
                 }
@@ -79,6 +81,10 @@ public class ClienteGUI2 extends JFrame {
         // Carrega apenas 10.000 registros de cada vez
         Cliente[] clientes = bufferDeClientes.proximosClientes(TAMANHO_BUFFER); // Chama o método com o tamanho do buffer
         if (clientes != null && clientes.length > 0) {
+            // Ordena os clientes usando o Merge Sort Externo
+            MergeSortExterno.mergeSortExterno(clientes);
+
+            // Exibe os clientes ordenados na tabela
             for (Cliente cliente : clientes) {
                 if (cliente != null) { // Verifica se o cliente não é nulo
                     tableModel.addRow(new Object[]{tableModel.getRowCount() + 1, cliente.getNome(), cliente.getSobrenome(), cliente.getTelefone(), cliente.getEndereco(), cliente.getCreditScore()});
