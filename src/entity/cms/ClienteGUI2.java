@@ -164,13 +164,11 @@ public class ClienteGUI2 extends JFrame {
 
                 Cliente novoCliente = new Cliente(nome, sobrenome, telefone, endereco, creditScore);
 
-                // Inicializa o buffer em modo "leitura e escrita"
+                // Inicializa o buffer em modo leitura para carregar os clientes existentes
                 bufferDeClientes.inicializaBuffer("leitura", arquivoSelecionado);
-
-                // Lê todos os clientes existentes e mantém no buffer
                 Cliente[] clientesExistentes = bufferDeClientes.proximosClientes(TAMANHO_BUFFER);
 
-                // Reabre o buffer no modo "escrita" para sobrescrever o arquivo com os dados existentes + novo cliente
+                // Reabre o buffer no modo escrita para adicionar o novo cliente
                 bufferDeClientes.inicializaBuffer("escrita", arquivoSelecionado);
 
                 // Adiciona os clientes existentes de volta ao arquivo
@@ -183,65 +181,63 @@ public class ClienteGUI2 extends JFrame {
                 // Adiciona o novo cliente
                 bufferDeClientes.adicionaAoBuffer(novoCliente);
 
-                // Persiste no arquivo
+                // Persiste os dados no arquivo
                 bufferDeClientes.escreveBuffer();
 
                 JOptionPane.showMessageDialog(this, "Cliente inserido com sucesso!", "Sucesso", JOptionPane.INFORMATION_MESSAGE);
-                carregarArquivo(); // Atualiza a tabela exibida
+
+                // Reinicializa o buffer para garantir que o novo cliente será carregado
+                bufferDeClientes.inicializaBuffer("leitura", arquivoSelecionado);
+
+                // Atualiza a tabela para refletir a nova lista de clientes
+                atualizarTabela();
             } catch (NumberFormatException ex) {
                 JOptionPane.showMessageDialog(this, "Credit Score deve ser um número válido!", "Erro", JOptionPane.ERROR_MESSAGE);
             }
         }
     }
 
+
     private void removerCliente() {
-        // Solicita ao usuário o nome do cliente a ser removido
         String nomeRemover = JOptionPane.showInputDialog(this, "Digite o nome do cliente para remover:");
         if (nomeRemover == null || nomeRemover.trim().isEmpty()) {
             JOptionPane.showMessageDialog(this, "Nome inválido!", "Erro", JOptionPane.ERROR_MESSAGE);
             return;
         }
 
-        // Inicializa o buffer no modo "leitura"
         bufferDeClientes.inicializaBuffer("leitura", arquivoSelecionado);
-
-        // Lê todos os clientes do arquivo
         Cliente[] clientes = bufferDeClientes.proximosClientes(TAMANHO_BUFFER);
         List<Cliente> listaAtualizada = new ArrayList<>();
-
         boolean clienteRemovido = false;
 
-        // Filtra os clientes para excluir aquele com o nome especificado
+        // Remover cliente correspondente
         for (Cliente cliente : clientes) {
-            if (cliente != null && !cliente.getNome().equalsIgnoreCase(nomeRemover)) {
+            if (cliente != null && !cliente.getNome().trim().equalsIgnoreCase(nomeRemover.trim())) {
                 listaAtualizada.add(cliente);
-            } else if (cliente != null && cliente.getNome().equalsIgnoreCase(nomeRemover)) {
+            } else if (cliente != null && cliente.getNome().trim().equalsIgnoreCase(nomeRemover.trim())) {
                 clienteRemovido = true;
             }
         }
 
-        // Verifica se o cliente foi encontrado e removido
         if (!clienteRemovido) {
             JOptionPane.showMessageDialog(this, "Cliente não encontrado!", "Erro", JOptionPane.ERROR_MESSAGE);
             return;
         }
 
-        // Reabre o buffer no modo "escrita"
+        // Reescreve o buffer sem o cliente removido
         bufferDeClientes.inicializaBuffer("escrita", arquivoSelecionado);
-
-        // Adiciona os clientes atualizados de volta ao buffer
         for (Cliente cliente : listaAtualizada) {
             bufferDeClientes.adicionaAoBuffer(cliente);
         }
-
-        // Persiste os dados atualizados no arquivo
         bufferDeClientes.escreveBuffer();
 
-        // Atualiza a tabela exibida
-        carregarArquivo();
-
         JOptionPane.showMessageDialog(this, "Cliente removido com sucesso!", "Sucesso", JOptionPane.INFORMATION_MESSAGE);
+
+        // Atualiza a tabela
+        atualizarTabela();
     }
+
+
 
     private void ordenarClientes() {
         if (!arquivoCarregado) {
@@ -285,6 +281,38 @@ public class ClienteGUI2 extends JFrame {
             registrosCarregados += clientes.length; // Atualiza o contador
         }
     }
+
+    private void atualizarTabela() {
+        if (!arquivoCarregado) {
+            JOptionPane.showMessageDialog(this, "Por favor, carregue um arquivo antes de atualizar a tabela.", "Erro", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        // Limpa a tabela
+        tableModel.setRowCount(0);
+
+        // Reinicializa o buffer no modo leitura
+        bufferDeClientes.inicializaBuffer("leitura", arquivoSelecionado);
+
+        // Carrega todos os clientes do buffer e atualiza a tabela
+        Cliente[] clientes;
+        do {
+            clientes = bufferDeClientes.proximosClientes(TAMANHO_BUFFER);
+            for (Cliente cliente : clientes) {
+                if (cliente != null) {
+                    tableModel.addRow(new Object[]{
+                            tableModel.getRowCount() + 1,
+                            cliente.getNome(),
+                            cliente.getSobrenome(),
+                            cliente.getTelefone(),
+                            cliente.getEndereco(),
+                            cliente.getCreditScore()
+                    });
+                }
+            }
+        } while (clientes.length > 0);
+    }
+
 
 
     public static void main(String[] args) {
