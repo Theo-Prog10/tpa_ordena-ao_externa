@@ -48,7 +48,8 @@ public class ClienteGUI2 extends JFrame {
         JButton btnCarregar = new JButton("Carregar Clientes");
         JButton btnPesquisar = new JButton("Pesquisar Cliente");
         JButton btnInserir = new JButton("Inserir Cliente");
-        JButton btnRemover = new JButton("Remover Cliente"); // Botão para remover cliente
+        JButton btnRemover = new JButton("Remover Cliente");
+        JButton btnOrdenar = new JButton("Ordenar Clientes");
         tableModel = new DefaultTableModel(new String[]{"#", "Nome", "Sobrenome", "Telefone", "Endereço", "Credit Score"}, 0);
         table = new JTable(tableModel);
         JScrollPane scrollPane = new JScrollPane(table);
@@ -83,11 +84,21 @@ public class ClienteGUI2 extends JFrame {
             removerCliente();
         });
 
+        // Ação do botão "Ordenar"
+        btnOrdenar.addActionListener(e -> {
+            if (!arquivoCarregado) {
+                JOptionPane.showMessageDialog(this, "Por favor, carregue um arquivo antes de ordenar os clientes.", "Erro", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            ordenarClientes();
+        });
+
         JPanel buttonPanel = new JPanel();
         buttonPanel.add(btnCarregar);
         buttonPanel.add(btnPesquisar);
         buttonPanel.add(btnInserir);
-        buttonPanel.add(btnRemover); // Adiciona o botão na interface
+        buttonPanel.add(btnRemover);
+        buttonPanel.add(btnOrdenar);
 
         panel.add(buttonPanel, BorderLayout.NORTH);
         panel.add(scrollPane, BorderLayout.CENTER);
@@ -232,17 +243,40 @@ public class ClienteGUI2 extends JFrame {
         JOptionPane.showMessageDialog(this, "Cliente removido com sucesso!", "Sucesso", JOptionPane.INFORMATION_MESSAGE);
     }
 
+    private void ordenarClientes() {
+        if (!arquivoCarregado) {
+            JOptionPane.showMessageDialog(this, "Por favor, carregue um arquivo antes de ordenar os clientes.", "Erro", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        String arquivoOrdenado = "clientes_ordenados.dat";
+
+        try {
+            // Chama a ordenação externa
+            MergeSortExterno.mergeSortExterno(arquivoSelecionado, arquivoOrdenado);
+
+            // Atualiza o buffer para carregar o arquivo ordenado
+            bufferDeClientes.inicializaBuffer("leitura", arquivoOrdenado);
+
+            // Limpa a tabela e recarrega os clientes ordenados
+            tableModel.setRowCount(0);
+            carregarMaisClientes();
+
+            JOptionPane.showMessageDialog(this, "Clientes ordenados com sucesso!", "Sucesso", JOptionPane.INFORMATION_MESSAGE);
+        } catch (IOException e) {
+            JOptionPane.showMessageDialog(this, "Erro ao ordenar clientes: " + e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+
+
 
 
     private void carregarMaisClientes() {
         // Carrega apenas 10.000 registros de cada vez
         Cliente[] clientes = bufferDeClientes.proximosClientes(TAMANHO_BUFFER); // Chama o método com o tamanho do buffer
         if (clientes != null && clientes.length > 0) {
-            // Ordena os clientes usando o Merge Sort Externo
-            MergeSortExterno.ordenarEmMemoria(clientes);
-
-
-            // Exibe os clientes ordenados na tabela
+            // Exibe os clientes na tabela na ordem em que foram lidos
             for (Cliente cliente : clientes) {
                 if (cliente != null) { // Verifica se o cliente não é nulo
                     tableModel.addRow(new Object[]{tableModel.getRowCount() + 1, cliente.getNome(), cliente.getSobrenome(), cliente.getTelefone(), cliente.getEndereco(), cliente.getCreditScore()});
@@ -251,6 +285,7 @@ public class ClienteGUI2 extends JFrame {
             registrosCarregados += clientes.length; // Atualiza o contador
         }
     }
+
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {

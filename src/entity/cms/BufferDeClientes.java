@@ -46,18 +46,13 @@ public class BufferDeClientes implements Buffer<Cliente> {
         try {
             List<Cliente> clientesLidos = arquivoSequencial.leiaDoArquivo(TAMANHO_BUFFER);
             if (clientesLidos != null) {
-                for (Cliente cliente : clientesLidos) {
-                    bufferList.add(cliente);
-                }
-                // Ordena o buffer após carregar os dados
-                Collections.sort(bufferList);
-                buffer.addAll(bufferList);
-                bufferList.clear();
+                buffer.addAll(clientesLidos);
             }
         } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         }
     }
+
 
     @Override
     public void escreveBuffer() {
