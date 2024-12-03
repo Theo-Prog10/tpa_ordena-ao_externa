@@ -45,36 +45,70 @@ public class ClienteGUI2 extends JFrame {
     private void criarInterface() {
         JPanel panel = new JPanel(new BorderLayout());
         JButton btnCarregar = new JButton("Carregar Clientes");
+        JButton btnPesquisar = new JButton("Pesquisar Cliente"); // Botão de pesquisa
         tableModel = new DefaultTableModel(new String[]{"#", "Nome", "Sobrenome", "Telefone", "Endereço", "Credit Score"}, 0);
         table = new JTable(tableModel);
         JScrollPane scrollPane = new JScrollPane(table);
 
-        // Adiciona um listener ao JScrollPane para carregar mais clientes ao rolar
-        scrollPane.getVerticalScrollBar().addAdjustmentListener(new AdjustmentListener() {
-            @Override
-            public void adjustmentValueChanged(AdjustmentEvent e) {
-                if (!scrollPane.getVerticalScrollBar().getValueIsAdjusting()) {
-                    // Verifica se estamos no final da tabela e se o arquivo foi carregado
-                    if (arquivoCarregado &&
-                            scrollPane.getVerticalScrollBar().getValue() +
-                                    scrollPane.getVerticalScrollBar().getVisibleAmount() >=
-                                    scrollPane.getVerticalScrollBar().getMaximum()) {
-                        carregarMaisClientes();
-                    }
+        // Listener para rolagem
+        scrollPane.getVerticalScrollBar().addAdjustmentListener(e -> {
+            if (!scrollPane.getVerticalScrollBar().getValueIsAdjusting()) {
+                if (arquivoCarregado &&
+                        scrollPane.getVerticalScrollBar().getValue() +
+                                scrollPane.getVerticalScrollBar().getVisibleAmount() >=
+                                scrollPane.getVerticalScrollBar().getMaximum()) {
+                    carregarMaisClientes();
                 }
             }
         });
 
-        btnCarregar.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                carregarArquivo();
+        // Ação do botão de carregar arquivo
+        btnCarregar.addActionListener(e -> carregarArquivo());
+
+        // Ação do botão de pesquisar
+        btnPesquisar.addActionListener(e -> {
+            if (!arquivoCarregado) {
+                JOptionPane.showMessageDialog(this, "Por favor, carregue um arquivo antes de pesquisar.", "Erro", JOptionPane.ERROR_MESSAGE);
+                return;
             }
+            pesquisarCliente(); // Chama o método de pesquisa
         });
 
-        panel.add(btnCarregar, BorderLayout.NORTH);
+        JPanel buttonPanel = new JPanel();
+        buttonPanel.add(btnCarregar);
+        buttonPanel.add(btnPesquisar);
+
+        panel.add(buttonPanel, BorderLayout.NORTH);
         panel.add(scrollPane, BorderLayout.CENTER);
         add(panel);
+    }
+
+    private void pesquisarCliente() {
+        String nomePesquisa = JOptionPane.showInputDialog(this, "Digite o nome do cliente para pesquisar:");
+        if (nomePesquisa == null || nomePesquisa.trim().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Nome inválido!", "Erro", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        tableModel.setRowCount(0); // Limpa a tabela antes de exibir os resultados
+
+        boolean encontrado = false;
+        Cliente[] clientes;
+        bufferDeClientes.inicializaBuffer("leitura", arquivoSelecionado); // Recarrega o buffer para pesquisar desde o início
+
+        do {
+            clientes = bufferDeClientes.proximosClientes(TAMANHO_BUFFER);
+            for (Cliente cliente : clientes) {
+                if (cliente != null && cliente.getNome().equalsIgnoreCase(nomePesquisa)) {
+                    tableModel.addRow(new Object[]{tableModel.getRowCount() + 1, cliente.getNome(), cliente.getSobrenome(), cliente.getTelefone(), cliente.getEndereco(), cliente.getCreditScore()});
+                    encontrado = true;
+                }
+            }
+        } while (clientes.length > 0);
+
+        if (!encontrado) {
+            JOptionPane.showMessageDialog(this, "Cliente não encontrado!", "Resultado da Pesquisa", JOptionPane.INFORMATION_MESSAGE);
+        }
     }
 
     private void carregarMaisClientes() {
@@ -82,7 +116,8 @@ public class ClienteGUI2 extends JFrame {
         Cliente[] clientes = bufferDeClientes.proximosClientes(TAMANHO_BUFFER); // Chama o método com o tamanho do buffer
         if (clientes != null && clientes.length > 0) {
             // Ordena os clientes usando o Merge Sort Externo
-            MergeSortExterno.mergeSortExterno(clientes);
+            MergeSortExterno.ordenarEmMemoria(clientes);
+
 
             // Exibe os clientes ordenados na tabela
             for (Cliente cliente : clientes) {
